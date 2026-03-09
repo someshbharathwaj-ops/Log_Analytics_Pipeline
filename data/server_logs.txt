@@ -1,0 +1,10 @@
+2026-03-01T10:00:00Z|ERROR|auth-service|10.0.0.1|Login failed for user 991
+2026-03-01T10:05:00Z|INFO|auth-service|10.0.0.1|Login successful for user 226
+2026-03-01T10:15:00Z|ERROR|billing-service|10.0.0.8|Payment gateway timeout
+2026-03-01T10:20:00Z|WARN|billing-service|10.0.0.8|Retry threshold nearing
+2026-03-01T10:40:00Z|ERROR|inventory-service|10.0.0.4|Stock sync failed
+2026-03-01T11:05:00Z|DEBUG|auth-service|10.0.0.2|Token validation trace
+2026-03-01T11:15:00Z|ERROR|auth-service|10.0.0.3|OAuth provider unavailable
+2026-03-01T11:45:00Z|INFO|notification-service|10.0.0.9|Email dispatch completed
+2026-03-01T12:05:00Z|ERROR|billing-service|10.0.0.8|Invoice generation exception
+2026-03-01T12:10:00Z|ERROR|inventory-service|10.0.0.4|Warehouse API returned 503
