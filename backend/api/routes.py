@@ -10,6 +10,17 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from backend.pipeline.pipeline import PipelineResult, run_pipeline, run_pipeline_from_content
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
+
+def decode_upload_content(raw: bytes) -> str:
+    """Decode bytes into text with predictable fallbacks."""
+    for encoding in ("utf-8-sig", "utf-16", "latin-1"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="ignore")
 
 
 @router.get("/health")
@@ -25,7 +36,13 @@ async def analyze_logs(file: UploadFile = File(...), level: str | None = None) -
         raise HTTPException(status_code=400, detail="A log file must be provided.")
 
     raw = await file.read()
-    content = raw.decode("utf-8", errors="ignore")
+    if len(raw) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Uploaded file is too large. Maximum supported size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.",
+        )
+
+    content = decode_upload_content(raw)
 
     if not content.strip():
         raise HTTPException(status_code=400, detail="Uploaded log file is empty.")
