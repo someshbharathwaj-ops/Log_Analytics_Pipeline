@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.api.routes import MAX_UPLOAD_BYTES, decode_upload_content
+from backend.api.routes import MAX_UPLOAD_BYTES, SAMPLE_DATA_PATH, decode_upload_content
 
 
 def test_decode_upload_content_handles_utf8_bom() -> None:
@@ -15,3 +15,7 @@ def test_decode_upload_content_handles_utf16() -> None:
 
 def test_upload_limit_constant_is_5mb() -> None:
     assert MAX_UPLOAD_BYTES == 5 * 1024 * 1024
+
+
+def test_sample_data_path_exists() -> None:
+    assert SAMPLE_DATA_PATH.exists()

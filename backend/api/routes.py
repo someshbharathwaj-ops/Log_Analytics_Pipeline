@@ -12,6 +12,8 @@ from backend.pipeline.pipeline import PipelineResult, run_pipeline, run_pipeline
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SAMPLE_DATA_PATH = PROJECT_ROOT / "data" / "server_logs.txt"
 
 
 def decode_upload_content(raw: bytes) -> str:
@@ -58,12 +60,11 @@ async def analyze_logs(file: UploadFile = File(...), level: str | None = None) -
 @router.get("/analyze-sample", response_model=AnalyticsResponse)
 def analyze_sample(level: str | None = None) -> AnalyticsResponse:
     """Analyze the sample dataset in data/server_logs.txt."""
-    sample_path = Path("data/server_logs.txt")
-    if not sample_path.exists():
+    if not SAMPLE_DATA_PATH.exists():
         raise HTTPException(status_code=404, detail="Sample data file not found.")
 
     try:
-        result: PipelineResult = run_pipeline(sample_path, level=level)
+        result: PipelineResult = run_pipeline(SAMPLE_DATA_PATH, level=level)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     return AnalyticsResponse(**asdict(result))
