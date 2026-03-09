@@ -25,6 +25,19 @@ def count_errors_per_ip(records: Iterable[LogRecord]) -> dict[str, int]:
     )
 
 
+def count_errors_per_ip_and_total(records: Iterable[LogRecord]) -> tuple[dict[str, int], int]:
+    """Aggregate error count by IP and total error count in one pass."""
+
+    def reducer(
+        acc: tuple[dict[str, int], int], record: LogRecord
+    ) -> tuple[dict[str, int], int]:
+        counter, total = acc
+        ip = record.get("ip", "unknown")
+        return (_increment_counter(counter, ip), total + 1)
+
+    return reduce(reducer, filter(has_level("ERROR"), records), ({}, 0))
+
+
 def log_level_distribution(records: Iterable[LogRecord]) -> dict[str, int]:
     """Aggregate all records by level."""
     return reduce(
@@ -65,4 +78,3 @@ def recursive_total(counts: list[int]) -> int:
     if not counts:
         return 0
     return counts[0] + recursive_total(counts[1:])
-

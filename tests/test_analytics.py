@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from backend.pipeline.analytics import (
+    count_errors_per_ip_and_total,
     count_errors_per_ip,
     error_timeline_by_hour,
     log_level_distribution,
@@ -38,6 +39,12 @@ def test_count_errors_per_ip() -> None:
     assert count_errors_per_ip(SAMPLE_RECORDS) == {"10.0.0.1": 2}
 
 
+def test_count_errors_per_ip_and_total() -> None:
+    counts, total = count_errors_per_ip_and_total(SAMPLE_RECORDS)
+    assert counts == {"10.0.0.1": 2}
+    assert total == 2
+
+
 def test_log_level_distribution() -> None:
     assert log_level_distribution(SAMPLE_RECORDS) == {"ERROR": 2, "WARN": 1}
 
@@ -53,4 +60,3 @@ def test_error_timeline_by_hour() -> None:
 
 def test_recursive_total() -> None:
     assert recursive_total([2, 3, 5]) == 10
-

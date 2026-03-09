@@ -107,15 +107,14 @@ def run_pipeline(file_path: str | Path, level: str | None = None) -> PipelineRes
 
     # Materialize once after lazy processing to support multiple analytics passes.
     records = tuple(records_stream)
+    error_counts_per_ip, total_errors = analytics.count_errors_per_ip_and_total(records)
 
     return PipelineResult(
-        error_counts_per_ip=analytics.count_errors_per_ip(records),
+        error_counts_per_ip=error_counts_per_ip,
         log_level_distribution=analytics.log_level_distribution(records),
         top_failing_services=analytics.top_failing_services(records),
         error_timeline=analytics.error_timeline_by_hour(records),
-        total_errors=analytics.recursive_total(
-            list(analytics.count_errors_per_ip(records).values())
-        ),
+        total_errors=total_errors,
         total_records=len(records),
     )
 
@@ -135,14 +134,13 @@ def run_pipeline_from_content(content: str, level: str | None = None) -> Pipelin
 
     curried_top = curry_binary(analytics.top_failing_services)
     top_five = curried_top(records)(5)
+    error_counts_per_ip, total_errors = analytics.count_errors_per_ip_and_total(records)
 
     return PipelineResult(
-        error_counts_per_ip=analytics.count_errors_per_ip(records),
+        error_counts_per_ip=error_counts_per_ip,
         log_level_distribution=analytics.log_level_distribution(records),
         top_failing_services=top_five,
         error_timeline=analytics.error_timeline_by_hour(records),
-        total_errors=analytics.recursive_total(
-            list(analytics.count_errors_per_ip(records).values())
-        ),
+        total_errors=total_errors,
         total_records=len(records),
     )
