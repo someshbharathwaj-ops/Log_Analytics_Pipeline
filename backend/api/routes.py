@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
-from backend.pipeline.pipeline import PipelineResult, run_pipeline_from_content
+from backend.pipeline.pipeline import PipelineResult, run_pipeline, run_pipeline_from_content
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
@@ -29,5 +30,22 @@ async def analyze_logs(file: UploadFile = File(...), level: str | None = None) -
     if not content.strip():
         raise HTTPException(status_code=400, detail="Uploaded log file is empty.")
 
-    result: PipelineResult = run_pipeline_from_content(content, level=level)
+    try:
+        result: PipelineResult = run_pipeline_from_content(content, level=level)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    return asdict(result)
+
+
+@router.get("/analyze-sample")
+def analyze_sample(level: str | None = None) -> dict:
+    """Analyze the sample dataset in data/server_logs.txt."""
+    sample_path = Path("data/server_logs.txt")
+    if not sample_path.exists():
+        raise HTTPException(status_code=404, detail="Sample data file not found.")
+
+    try:
+        result: PipelineResult = run_pipeline(sample_path, level=level)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
     return asdict(result)

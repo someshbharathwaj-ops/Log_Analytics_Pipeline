@@ -13,6 +13,7 @@ from backend.pipeline.functional_utils import compose, curry_binary
 from backend.pipeline.stream_utils import filter_stream, map_stream, read_lines_lazy
 
 LogRecord = dict[str, str]
+SUPPORTED_LEVELS = frozenset({"ERROR", "WARN", "INFO", "DEBUG"})
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,23 @@ def build_level_filter(level: str) -> Callable[[LogRecord], bool]:
     return lambda record: record.get("level", "").upper() == normalized
 
 
+def normalize_level(level: str | None) -> str | None:
+    """Normalize and validate an optional level filter."""
+    if level is None:
+        return None
+
+    normalized = level.strip().upper()
+    if not normalized:
+        return None
+
+    if normalized not in SUPPORTED_LEVELS:
+        raise ValueError(
+            f"Unsupported level '{level}'. Expected one of: {', '.join(sorted(SUPPORTED_LEVELS))}."
+        )
+
+    return normalized
+
+
 def transform_pipeline(*steps: Callable[[Iterable], Iterable]) -> Callable[[Iterable], Iterable]:
     """
     Compose stream transformations into a single pipeline function.
@@ -81,6 +99,7 @@ def stream_records(file_path: str | Path) -> Iterator[LogRecord]:
 
 def run_pipeline(file_path: str | Path, level: str | None = None) -> PipelineResult:
     """Run the full analytics pipeline for a log file."""
+    level = normalize_level(level)
     records_stream = stream_records(file_path)
 
     if level:
@@ -103,6 +122,7 @@ def run_pipeline(file_path: str | Path, level: str | None = None) -> PipelineRes
 
 def run_pipeline_from_content(content: str, level: str | None = None) -> PipelineResult:
     """Run the same pipeline for in-memory text content."""
+    level = normalize_level(level)
     lines = (line.strip() for line in content.splitlines() if line.strip())
     parse_step = partial(map, parse_or_skip)
     valid_step = partial(filter, not_none)
@@ -126,4 +146,3 @@ def run_pipeline_from_content(content: str, level: str | None = None) -> Pipelin
         ),
         total_records=len(records),
     )
-

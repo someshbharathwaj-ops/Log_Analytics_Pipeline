@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from backend.pipeline.functional_utils import curry_binary, recursive_map
-from backend.pipeline.pipeline import parse_log_line, run_pipeline_from_content
+import pytest
+
+from backend.pipeline.pipeline import normalize_level, parse_log_line, run_pipeline_from_content
 
 
 def test_closure_level_filter() -> None:
@@ -30,3 +32,12 @@ def test_currying() -> None:
     curried_sum = curry_binary(lambda a, b: a + b)
     assert curried_sum(4)(6) == 10
 
+
+def test_normalize_level_accepts_case_insensitive_input() -> None:
+    assert normalize_level("error") == "ERROR"
+    assert normalize_level(" WARN ") == "WARN"
+
+
+def test_normalize_level_rejects_unknown_value() -> None:
+    with pytest.raises(ValueError):
+        normalize_level("TRACE")
