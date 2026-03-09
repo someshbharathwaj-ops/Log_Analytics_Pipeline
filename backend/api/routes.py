@@ -7,6 +7,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
+from backend.api.schemas import AnalyticsResponse, HealthResponse
 from backend.pipeline.pipeline import PipelineResult, run_pipeline, run_pipeline_from_content
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
@@ -23,14 +24,14 @@ def decode_upload_content(raw: bytes) -> str:
     return raw.decode("utf-8", errors="ignore")
 
 
-@router.get("/health")
-def health_check() -> dict[str, str]:
+@router.get("/health", response_model=HealthResponse)
+def health_check() -> HealthResponse:
     """Health endpoint for deployment checks."""
-    return {"status": "ok"}
+    return HealthResponse(status="ok")
 
 
-@router.post("/analyze")
-async def analyze_logs(file: UploadFile = File(...), level: str | None = None) -> dict:
+@router.post("/analyze", response_model=AnalyticsResponse)
+async def analyze_logs(file: UploadFile = File(...), level: str | None = None) -> AnalyticsResponse:
     """Analyze uploaded logs and return aggregate metrics."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="A log file must be provided.")
@@ -51,11 +52,11 @@ async def analyze_logs(file: UploadFile = File(...), level: str | None = None) -
         result: PipelineResult = run_pipeline_from_content(content, level=level)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
-    return asdict(result)
+    return AnalyticsResponse(**asdict(result))
 
 
-@router.get("/analyze-sample")
-def analyze_sample(level: str | None = None) -> dict:
+@router.get("/analyze-sample", response_model=AnalyticsResponse)
+def analyze_sample(level: str | None = None) -> AnalyticsResponse:
     """Analyze the sample dataset in data/server_logs.txt."""
     sample_path = Path("data/server_logs.txt")
     if not sample_path.exists():
@@ -65,4 +66,4 @@ def analyze_sample(level: str | None = None) -> dict:
         result: PipelineResult = run_pipeline(sample_path, level=level)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
-    return asdict(result)
+    return AnalyticsResponse(**asdict(result))
