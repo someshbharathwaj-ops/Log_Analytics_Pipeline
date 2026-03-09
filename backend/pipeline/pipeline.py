@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
+from ipaddress import ip_address
 from pathlib import Path
 
 from backend.pipeline import analytics
@@ -33,14 +34,22 @@ def parse_log_line(line: str) -> LogRecord:
     Parse expected line format:
     timestamp|level|service|ip|message
     """
-    timestamp, level, service, ip_address, message = line.split("|", maxsplit=4)
+    parts = [part.strip() for part in line.split("|", maxsplit=4)]
+    if len(parts) != 5:
+        raise ValueError("Malformed log line. Expected 5 pipe-delimited fields.")
+
+    timestamp, level, service, ip_address_raw, message = parts
+    if not timestamp or not level or not service or not ip_address_raw or not message:
+        raise ValueError("Malformed log line. Fields cannot be empty.")
+
     # Validate timestamp while keeping the transformation pure.
     datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    ip_address(ip_address_raw)
     return {
         "timestamp": timestamp,
         "level": level,
         "service": service,
-        "ip": ip_address,
+        "ip": ip_address_raw,
         "message": message,
     }
 

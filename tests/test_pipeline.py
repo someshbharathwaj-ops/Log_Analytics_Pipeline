@@ -28,6 +28,16 @@ def test_parse_log_line() -> None:
     assert record["service"] == "api"
 
 
+def test_parse_log_line_rejects_invalid_ip() -> None:
+    with pytest.raises(ValueError):
+        parse_log_line("2026-03-01T10:00:00Z|ERROR|api|999.999.0.1|Unhandled exception")
+
+
+def test_parse_log_line_rejects_missing_fields() -> None:
+    with pytest.raises(ValueError):
+        parse_log_line("2026-03-01T10:00:00Z|ERROR|api|10.0.0.5")
+
+
 def test_currying() -> None:
     curried_sum = curry_binary(lambda a, b: a + b)
     assert curried_sum(4)(6) == 10
