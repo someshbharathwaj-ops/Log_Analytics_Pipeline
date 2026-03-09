@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 
 from backend.api.schemas import AnalyticsResponse, HealthResponse
 from backend.pipeline.pipeline import PipelineResult, run_pipeline, run_pipeline_from_content
@@ -14,6 +15,14 @@ router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SAMPLE_DATA_PATH = PROJECT_ROOT / "data" / "server_logs.txt"
+LEVEL_QUERY = Annotated[
+    str | None,
+    Query(
+        default=None,
+        description="Optional log level filter.",
+        examples=["ERROR", "WARN", "INFO", "DEBUG"],
+    ),
+]
 
 
 def decode_upload_content(raw: bytes) -> str:
@@ -33,7 +42,7 @@ def health_check() -> HealthResponse:
 
 
 @router.post("/analyze", response_model=AnalyticsResponse)
-async def analyze_logs(file: UploadFile = File(...), level: str | None = None) -> AnalyticsResponse:
+async def analyze_logs(file: UploadFile = File(...), level: LEVEL_QUERY = None) -> AnalyticsResponse:
     """Analyze uploaded logs and return aggregate metrics."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="A log file must be provided.")
@@ -58,7 +67,7 @@ async def analyze_logs(file: UploadFile = File(...), level: str | None = None) -
 
 
 @router.get("/analyze-sample", response_model=AnalyticsResponse)
-def analyze_sample(level: str | None = None) -> AnalyticsResponse:
+def analyze_sample(level: LEVEL_QUERY = None) -> AnalyticsResponse:
     """Analyze the sample dataset in data/server_logs.txt."""
     if not SAMPLE_DATA_PATH.exists():
         raise HTTPException(status_code=404, detail="Sample data file not found.")
