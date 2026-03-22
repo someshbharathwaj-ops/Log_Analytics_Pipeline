@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from backend.pipeline.analytics import (
+    classify_health_status,
     count_errors_per_ip_and_total,
     count_errors_per_ip,
+    dominant_level,
     error_timeline_by_hour,
     log_level_distribution,
+    peak_error_window,
     recursive_total,
+    service_error_share,
     top_failing_services,
 )
 
@@ -60,3 +64,23 @@ def test_error_timeline_by_hour() -> None:
 
 def test_recursive_total() -> None:
     assert recursive_total([2, 3, 5]) == 10
+
+
+def test_service_error_share() -> None:
+    assert service_error_share(SAMPLE_RECORDS) == {"auth": 100.0}
+
+
+def test_dominant_level() -> None:
+    assert dominant_level(SAMPLE_RECORDS) == "ERROR"
+
+
+def test_peak_error_window() -> None:
+    assert peak_error_window(SAMPLE_RECORDS) == "2026-03-01T10:00"
+
+
+def test_classify_health_status() -> None:
+    assert classify_health_status(0, 0) == "no-data"
+    assert classify_health_status(0, 5) == "stable"
+    assert classify_health_status(1, 10) == "monitor"
+    assert classify_health_status(3, 10) == "degraded"
+    assert classify_health_status(6, 10) == "critical"

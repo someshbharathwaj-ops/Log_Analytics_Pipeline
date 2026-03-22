@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from functools import reduce
+from math import isclose
 
 from backend.pipeline.filters import has_level
 
@@ -78,3 +79,47 @@ def recursive_total(counts: list[int]) -> int:
     if not counts:
         return 0
     return counts[0] + recursive_total(counts[1:])
+
+
+def service_error_share(records: Iterable[LogRecord]) -> dict[str, float]:
+    """Return percentage share of errors contributed by each failing service."""
+    error_counts = dict(top_failing_services(records, top_n=1000))
+    total_errors = recursive_total(list(error_counts.values()))
+    if total_errors == 0:
+        return {}
+
+    return {
+        service: round((count / total_errors) * 100, 2)
+        for service, count in error_counts.items()
+    }
+
+
+def dominant_level(records: Iterable[LogRecord]) -> str | None:
+    """Return the most frequent log level in the provided records."""
+    distribution = log_level_distribution(records)
+    if not distribution:
+        return None
+    return max(distribution.items(), key=lambda item: (item[1], item[0]))[0]
+
+
+def peak_error_window(records: Iterable[LogRecord]) -> str | None:
+    """Return the hour bucket with the highest error volume."""
+    timeline = error_timeline_by_hour(records)
+    if not timeline:
+        return None
+    return max(timeline.items(), key=lambda item: (item[1], item[0]))[0]
+
+
+def classify_health_status(total_errors: int, total_records: int) -> str:
+    """Classify operational health using the observed error rate."""
+    if total_records <= 0:
+        return "no-data"
+
+    error_rate = total_errors / total_records
+    if isclose(error_rate, 0.0):
+        return "stable"
+    if error_rate < 0.2:
+        return "monitor"
+    if error_rate < 0.4:
+        return "degraded"
+    return "critical"
