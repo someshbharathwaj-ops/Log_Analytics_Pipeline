@@ -18,7 +18,6 @@ SAMPLE_DATA_PATH = PROJECT_ROOT / "data" / "server_logs.txt"
 LEVEL_QUERY = Annotated[
     str | None,
     Query(
-        default=None,
         description="Optional log level filter.",
         examples=["ERROR", "WARN", "INFO", "DEBUG"],
     ),
