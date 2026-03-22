@@ -3,8 +3,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { UploadCloud } from "lucide-react";
 import { useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 import { useAnalytics } from "@/hooks/use-analytics";
+
+const MAX_CLIENT_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export function UploadDropzone() {
   const { uploadFile, uploading } = useAnalytics();
@@ -13,6 +16,16 @@ export function UploadDropzone() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFile = async (file: File) => {
+    if (!/\.(txt|log)$/i.test(file.name)) {
+      toast.error("Choose a .txt or .log file.");
+      return;
+    }
+
+    if (file.size > MAX_CLIENT_UPLOAD_BYTES) {
+      toast.error("Files larger than 5 MB are not supported.");
+      return;
+    }
+
     setFileName(file.name);
     await uploadFile(file);
   };
