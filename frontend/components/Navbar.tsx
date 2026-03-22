@@ -2,11 +2,14 @@
 
 import { Bell, RefreshCw } from "lucide-react";
 
+import { HealthBadge } from "@/components/HealthBadge";
+import { useDashboardPreferences } from "@/hooks/use-dashboard-preferences";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { formatDateLabel } from "@/lib/format";
 
 export function Navbar() {
-  const { refresh, loading, lastUpdated } = useAnalytics();
+  const { refresh, loading, lastUpdated, data } = useAnalytics();
+  const { autoRefresh } = useDashboardPreferences();
 
   return (
     <header className="glass sticky top-3 z-20 flex items-center justify-between rounded-2xl px-4 py-3">
@@ -16,7 +19,10 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="hidden text-xs text-muted md:inline">Updated {formatDateLabel(lastUpdated)}</span>
+        {data ? <HealthBadge status={data.health_status} /> : null}
+        <span className="hidden text-xs text-muted lg:inline">
+          Updated {formatDateLabel(lastUpdated)}{autoRefresh ? " • Auto refresh on" : ""}
+        </span>
         <button
           onClick={() => void refresh()}
           className="rounded-lg border border-white/15 bg-white/5 p-2 text-muted transition hover:text-text"
