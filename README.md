@@ -3,7 +3,7 @@
 Production-quality Python project that demonstrates functional programming concepts in a real-world log analytics system with:
 - FastAPI backend API
 - Functional log processing pipeline
-- Streamlit dashboard
+- Next.js analytics dashboard
 - Pytest coverage
 
 ## Project Structure
@@ -28,13 +28,19 @@ Log_Analytics_Pipeline
 |       `-- pipeline.py
 |
 |-- frontend/
-|   `-- dashboard.py
+|   |-- app/
+|   |-- components/
+|   |-- hooks/
+|   `-- lib/
 |
 |-- tests/
+|   |-- test_api_integration.py
+|   |-- test_api_routes.py
 |   |-- test_pipeline.py
 |   `-- test_analytics.py
 |
 |-- requirements.txt
+|-- pytest.ini
 |-- .gitignore
 `-- README.md
 ```
@@ -52,6 +58,13 @@ Log_Analytics_Pipeline
 - Recursion: `recursive_map`, `recursive_total`, `reduce_recursive`
 - Immutable-style updates: dictionary counters returned as new values
 - Pure transformations: parsing, filtering, and aggregations separated from I/O
+
+## What Is New
+
+- Richer backend analytics output with error-share, dominant level, noisiest IP, peak error window, and health classification
+- Processing metadata including source tracking, generated timestamp, and skipped malformed record counts
+- Next.js dashboard updates for health badges, operational summaries, service-share views, upload validation, and saved user preferences
+- Better developer ergonomics with `pytest.ini`, improved `.gitignore`, and expanded API tests
 
 ## Log Format
 
@@ -90,6 +103,37 @@ uvicorn backend.app:app --reload
 ```
 
 Backend endpoints:
+- `GET /`
 - `GET /api/analytics/health`
 - `POST /api/analytics/analyze` (multipart file upload, optional `level` query param)
+- `GET /api/analytics/analyze-sample` (optional `level` query param)
 
+## Run Frontend Dashboard
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open the dashboard at:
+- `http://127.0.0.1:3000/`
+
+Set an optional backend override in the frontend shell:
+
+```powershell
+$env:BACKEND_URL="http://127.0.0.1:8000"
+```
+
+Dashboard capabilities:
+- Dashboard overview with health badge, error rate, skipped record count, and source metadata
+- Log analytics upload flow with client-side file validation
+- Error insights page with service share analysis and operational diagnosis
+- IP activity page with ranked offenders and error-share breakdown
+- Settings page with saved auto-refresh and table-density preferences
+
+## Run Tests
+
+```powershell
+python -m pytest
+```
