@@ -4,6 +4,12 @@ const API_BASE = "/api/analytics";
 
 async function parseResponse(response: Response): Promise<AnalyticsResponse> {
   if (!response.ok) {
+    const contentType = response.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const payload = (await response.json()) as { detail?: string };
+      throw new Error(payload.detail || "Request failed.");
+    }
+
     const details = await response.text();
     throw new Error(details || "Request failed.");
   }
