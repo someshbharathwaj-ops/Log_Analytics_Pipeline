@@ -16,6 +16,7 @@ def test_closure_level_filter() -> None:
     result = run_pipeline_from_content(content, level="ERROR")
     assert result.total_records == 1
     assert result.log_level_distribution == {"ERROR": 1}
+    assert result.applied_level == "ERROR"
 
 
 def test_recursive_map() -> None:
@@ -51,3 +52,21 @@ def test_normalize_level_accepts_case_insensitive_input() -> None:
 def test_normalize_level_rejects_unknown_value() -> None:
     with pytest.raises(ValueError):
         normalize_level("TRACE")
+
+
+def test_run_pipeline_from_content_reports_skipped_records_and_insights() -> None:
+    content = "\n".join(
+        [
+            "2026-03-01T10:00:00Z|ERROR|auth|10.0.0.1|Login failed",
+            "malformed-line",
+            "2026-03-01T10:05:00Z|WARN|billing|10.0.0.2|Retry threshold nearing",
+        ]
+    )
+    result = run_pipeline_from_content(content)
+
+    assert result.total_records == 2
+    assert result.skipped_records == 1
+    assert result.source == "upload"
+    assert result.noisiest_ip == "10.0.0.1"
+    assert result.dominant_level in {"ERROR", "WARN"}
+    assert result.health_status == "critical"
