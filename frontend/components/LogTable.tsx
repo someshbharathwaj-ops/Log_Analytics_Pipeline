@@ -3,6 +3,8 @@
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { useDashboardPreferences } from "@/hooks/use-dashboard-preferences";
+
 type LogRow = {
   key: string;
   category: string;
@@ -12,6 +14,7 @@ type LogRow = {
 
 export function LogTable({ rows }: { rows: LogRow[] }) {
   const [query, setQuery] = useState("");
+  const { density } = useDashboardPreferences();
 
   const filtered = useMemo(() => {
     const normalized = query.toLowerCase().trim();
@@ -22,6 +25,8 @@ export function LogTable({ rows }: { rows: LogRow[] }) {
       `${row.category} ${row.label}`.toLowerCase().includes(normalized),
     );
   }, [rows, query]);
+
+  const rowPadding = density === "compact" ? "py-1.5" : "py-2.5";
 
   return (
     <div className="glass rounded-2xl p-5">
@@ -47,9 +52,9 @@ export function LogTable({ rows }: { rows: LogRow[] }) {
           <tbody>
             {filtered.map((row) => (
               <tr key={row.key} className="border-t border-white/5">
-                <td className="py-2 text-muted">{row.category}</td>
-                <td className="py-2 text-text">{row.label}</td>
-                <td className="py-2 text-right text-text">{row.value}</td>
+                <td className={`${rowPadding} text-muted`}>{row.category}</td>
+                <td className={`${rowPadding} text-text`}>{row.label}</td>
+                <td className={`${rowPadding} text-right text-text`}>{row.value}</td>
               </tr>
             ))}
             {filtered.length === 0 ? (

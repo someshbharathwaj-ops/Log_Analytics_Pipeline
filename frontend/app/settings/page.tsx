@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
-
 import { AnimatedContainer } from "@/components/AnimatedContainer";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { useDashboardPreferences } from "@/hooks/use-dashboard-preferences";
+import { formatDateLabel, formatSourceLabel } from "@/lib/format";
+import type { TableDensity } from "@/lib/types";
 
 export default function SettingsPage() {
-  const [autoRefresh, setAutoRefresh] = useState(false);
-  const [density, setDensity] = useState("comfortable");
+  const { autoRefresh, setAutoRefresh, density, setDensity } = useDashboardPreferences();
+  const { data, lastUpdated } = useAnalytics();
 
   return (
     <AnimatedContainer className="space-y-4">
@@ -38,13 +40,28 @@ export default function SettingsPage() {
             Density
             <select
               value={density}
-              onChange={(event) => setDensity(event.target.value)}
+              onChange={(event) => setDensity(event.target.value as TableDensity)}
               className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-text outline-none"
             >
               <option value="comfortable">Comfortable</option>
               <option value="compact">Compact</option>
             </select>
           </label>
+        </article>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Current Source</p>
+          <p className="mt-2 text-lg font-semibold">{data ? formatSourceLabel(data.source) : "No dataset loaded"}</p>
+        </article>
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Latest Refresh</p>
+          <p className="mt-2 text-lg font-semibold">{formatDateLabel(lastUpdated)}</p>
+        </article>
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Skipped Records</p>
+          <p className="mt-2 text-lg font-semibold">{data?.skipped_records ?? 0}</p>
         </article>
       </section>
     </AnimatedContainer>

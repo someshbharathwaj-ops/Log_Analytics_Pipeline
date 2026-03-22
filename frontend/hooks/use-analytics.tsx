@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
+import { useDashboardPreferences } from "@/hooks/use-dashboard-preferences";
 import { fetchSampleAnalytics, uploadAnalytics } from "@/lib/api";
 import type { AnalyticsResponse, LevelFilter } from "@/lib/types";
 
@@ -20,6 +21,7 @@ type AnalyticsContextValue = {
 const AnalyticsContext = createContext<AnalyticsContextValue | null>(null);
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+  const { autoRefresh } = useDashboardPreferences();
   const [data, setData] = useState<AnalyticsResponse | null>(null);
   const [level, setLevel] = useState<LevelFilter>("");
   const [loading, setLoading] = useState(true);
@@ -59,6 +61,18 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void refresh();
   }, [level]);
+
+  useEffect(() => {
+    if (!autoRefresh) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refresh();
+    }, 60_000);
+
+    return () => window.clearInterval(intervalId);
+  }, [autoRefresh, level]);
 
   const value = useMemo(
     () => ({ data, level, loading, uploading, lastUpdated, setLevel, refresh, uploadFile }),
