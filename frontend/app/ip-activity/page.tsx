@@ -7,6 +7,7 @@ import { ChartWidget } from "@/components/ChartWidget";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { LogTable } from "@/components/LogTable";
 import { useAnalytics } from "@/hooks/use-analytics";
+import { formatPercent } from "@/lib/format";
 
 export default function IpActivityPage() {
   const { data, loading } = useAnalytics();
@@ -17,7 +18,11 @@ export default function IpActivityPage() {
 
   const ipData = Object.entries(data.error_counts_per_ip)
     .sort(([, a], [, b]) => b - a)
-    .map(([ip, errors]) => ({ ip, errors }));
+    .map(([ip, errors]) => ({
+      ip,
+      errors,
+      share: data.total_errors > 0 ? (errors / data.total_errors) * 100 : 0,
+    }));
 
   return (
     <AnimatedContainer className="space-y-4">
@@ -39,11 +44,23 @@ export default function IpActivityPage() {
         </div>
       </ChartWidget>
 
+      <section className="grid gap-4 lg:grid-cols-3">
+        {ipData.slice(0, 3).map((row, index) => (
+          <article key={row.ip} className="glass rounded-2xl p-5">
+            <p className="text-sm text-muted">Rank #{index + 1}</p>
+            <p className="mt-2 text-xl font-semibold">{row.ip}</p>
+            <p className="mt-2 text-sm text-muted">
+              {row.errors} errors • {formatPercent(row.share)} of observed errors
+            </p>
+          </article>
+        ))}
+      </section>
+
       <LogTable
         rows={ipData.map((row) => ({
           key: `ip-${row.ip}`,
           category: "IP",
-          label: row.ip,
+          label: `${row.ip} (${formatPercent(row.share)})`,
           value: row.errors,
         }))}
       />
