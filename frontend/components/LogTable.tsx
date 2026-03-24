@@ -14,30 +14,43 @@ type LogRow = {
 
 export function LogTable({ rows }: { rows: LogRow[] }) {
   const [query, setQuery] = useState("");
+  const [sortDescending, setSortDescending] = useState(true);
   const { density } = useDashboardPreferences();
 
   const filtered = useMemo(() => {
     const normalized = query.toLowerCase().trim();
-    if (!normalized) {
-      return rows;
-    }
-    return rows.filter((row) =>
-      `${row.category} ${row.label}`.toLowerCase().includes(normalized),
-    );
-  }, [rows, query]);
+    const matchingRows = !normalized
+      ? rows
+      : rows.filter((row) => `${row.category} ${row.label}`.toLowerCase().includes(normalized));
+
+    return [...matchingRows].sort((left, right) => {
+      const delta = left.value - right.value;
+      return sortDescending ? -delta : delta;
+    });
+  }, [rows, query, sortDescending]);
 
   const rowPadding = density === "compact" ? "py-1.5" : "py-2.5";
 
   return (
     <div className="glass rounded-2xl p-5">
-      <div className="mb-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
-        <Search className="h-4 w-4 text-muted" />
-        <input
-          className="w-full bg-transparent text-sm text-text outline-none placeholder:text-muted"
-          placeholder="Search by category or label"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+      <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+        <div className="flex min-w-60 flex-1 items-center gap-3">
+          <Search className="h-4 w-4 text-muted" />
+          <input
+            className="w-full bg-transparent text-sm text-text outline-none placeholder:text-muted"
+            placeholder="Search by category or label"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
+        <button
+          type="button"
+          className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-muted transition hover:text-text"
+          onClick={() => setSortDescending((current) => !current)}
+        >
+          Sort {sortDescending ? "Highest first" : "Lowest first"}
+        </button>
+        <span className="text-xs text-muted">{filtered.length} rows</span>
       </div>
 
       <div className="overflow-x-auto">
