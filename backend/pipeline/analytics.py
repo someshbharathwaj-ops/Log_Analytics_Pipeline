@@ -142,3 +142,11 @@ def classify_health_status(total_errors: int, total_records: int) -> str:
     if error_rate < 0.4:
         return "degraded"
     return "critical"
+
+
+def clean_record_ratio(total_records: int, skipped_records: int) -> float:
+    """Return the percentage of non-skipped records in the dataset."""
+    observed_records = total_records + skipped_records
+    if observed_records <= 0:
+        return 0.0
+    return round((total_records / observed_records) * 100, 2)

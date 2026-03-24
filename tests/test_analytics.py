@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from backend.pipeline.analytics import (
+    clean_record_ratio,
     classify_health_status,
     count_errors_per_ip_and_total,
     count_errors_per_ip,
@@ -94,3 +95,8 @@ def test_classify_health_status() -> None:
     assert classify_health_status(1, 10) == "monitor"
     assert classify_health_status(3, 10) == "degraded"
     assert classify_health_status(6, 10) == "critical"
+
+
+def test_clean_record_ratio() -> None:
+    assert clean_record_ratio(8, 2) == 80.0
+    assert clean_record_ratio(0, 0) == 0.0
