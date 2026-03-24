@@ -7,12 +7,13 @@ import { ChartWidget } from "@/components/ChartWidget";
 import { HealthBadge } from "@/components/HealthBadge";
 import { LevelFilterSelect } from "@/components/LevelFilterSelect";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { ServiceFilterSelect } from "@/components/ServiceFilterSelect";
 import { UploadDropzone } from "@/components/UploadDropzone";
 import { useAnalytics } from "@/hooks/use-analytics";
-import { formatDateLabel, formatSourceLabel } from "@/lib/format";
+import { formatDateLabel, formatPercent, formatSourceLabel } from "@/lib/format";
 
 export default function LogAnalyticsPage() {
-  const { data, loading, level, setLevel, uploading } = useAnalytics();
+  const { data, loading, level, setLevel, service, setService, uploading } = useAnalytics();
 
   if (loading || !data) {
     return <LoadingSkeleton className="h-[420px]" />;
@@ -30,18 +31,21 @@ export default function LogAnalyticsPage() {
           <p className="text-sm text-muted">Upload logs or inspect sample data analytics.</p>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
             <span>Source {formatSourceLabel(data.source)}</span>
-            <span>•</span>
+            <span>|</span>
             <span>Generated {formatDateLabel(data.generated_at)}</span>
             <HealthBadge status={data.health_status} />
           </div>
         </div>
-        <LevelFilterSelect value={level} onChange={setLevel} />
+        <div className="flex flex-wrap items-center gap-2">
+          <LevelFilterSelect value={level} onChange={setLevel} />
+          <ServiceFilterSelect services={data.service_volume} value={service} onChange={setService} />
+        </div>
       </div>
 
       <section className="grid gap-4 lg:grid-cols-5">
         <div className="lg:col-span-2">
           <UploadDropzone />
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-xs uppercase tracking-[0.2em] text-muted">Processed</p>
               <p className="mt-2 text-lg font-semibold">{data.total_records}</p>
@@ -51,11 +55,17 @@ export default function LogAnalyticsPage() {
               <p className="mt-2 text-lg font-semibold">{data.skipped_records}</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted">Quality</p>
+              <p className="mt-2 text-lg font-semibold">{formatPercent(data.clean_record_ratio)}</p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-xs uppercase tracking-[0.2em] text-muted">Filter</p>
-              <p className="mt-2 text-lg font-semibold">{data.applied_level ?? "ALL"}</p>
+              <p className="mt-2 text-lg font-semibold">{data.applied_service ?? data.applied_level ?? "ALL"}</p>
             </div>
           </div>
-          <p className="mt-2 text-xs text-muted">{uploading ? "Processing upload..." : "Sample analytics auto-refresh on level change."}</p>
+          <p className="mt-2 text-xs text-muted">
+            {uploading ? "Processing upload..." : "Sample analytics auto-refresh whenever filters change."}
+          </p>
         </div>
         <div className="lg:col-span-3">
           <ChartWidget title="Error Trend" subtitle="Time-series trajectory of error events">
