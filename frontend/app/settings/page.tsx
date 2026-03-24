@@ -8,7 +8,7 @@ import type { TableDensity } from "@/lib/types";
 
 export default function SettingsPage() {
   const { autoRefresh, setAutoRefresh, density, setDensity } = useDashboardPreferences();
-  const { data, lastUpdated } = useAnalytics();
+  const { data, lastUpdated, level, service } = useAnalytics();
 
   return (
     <AnimatedContainer className="space-y-4">
@@ -62,6 +62,21 @@ export default function SettingsPage() {
         <article className="glass rounded-2xl p-5">
           <p className="text-sm text-muted">Skipped Records</p>
           <p className="mt-2 text-lg font-semibold">{data?.skipped_records ?? 0}</p>
+        </article>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Active Level Filter</p>
+          <p className="mt-2 text-lg font-semibold">{level || "ALL"}</p>
+        </article>
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Active Service Filter</p>
+          <p className="mt-2 text-lg font-semibold">{service || "All services"}</p>
+        </article>
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Clean Record Ratio</p>
+          <p className="mt-2 text-lg font-semibold">{data ? `${data.clean_record_ratio.toFixed(1)}%` : "0.0%"}</p>
         </article>
       </section>
     </AnimatedContainer>
