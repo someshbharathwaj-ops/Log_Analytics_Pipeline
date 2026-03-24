@@ -17,6 +17,7 @@ export default function ErrorInsightsPage() {
   }
 
   const serviceData = data.top_failing_services.map(([name, size]) => ({ name, size }));
+  const serviceVolumeRows = Object.entries(data.service_volume).sort(([, left], [, right]) => right - left);
   const errorRate = data.total_records > 0 ? ((data.total_errors / data.total_records) * 100).toFixed(2) : "0.00";
   const diagnosis =
     data.health_status === "critical"
@@ -48,7 +49,7 @@ export default function ErrorInsightsPage() {
         </article>
         <article className="glass rounded-2xl p-5">
           <p className="text-sm text-muted">Impacted Services</p>
-          <p className="mt-2 text-4xl font-semibold text-text">{data.top_failing_services.length}</p>
+          <p className="mt-2 text-4xl font-semibold text-text">{data.impacted_service_count}</p>
         </article>
       </section>
 
@@ -69,7 +70,7 @@ export default function ErrorInsightsPage() {
                 <div className="mb-1 flex items-center justify-between rounded-lg px-1">
                   <span className="text-muted">{service}</span>
                   <span className="font-semibold text-text">
-                    {count} • {formatPercent(data.service_error_share[service] ?? 0)}
+                    {count} | {formatPercent(data.service_error_share[service] ?? 0)}
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-white/5">
@@ -100,6 +101,32 @@ export default function ErrorInsightsPage() {
               <dd className="font-medium text-text">{data.dominant_level ?? "None"}</dd>
             </div>
           </dl>
+        </article>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <article className="glass rounded-2xl p-5">
+          <h3 className="text-lg font-semibold">Frequent Error Messages</h3>
+          <ul className="mt-3 space-y-3 text-sm">
+            {data.top_error_messages.map(([message, count]) => (
+              <li key={message} className="rounded-lg border border-white/10 px-3 py-2">
+                <p className="font-medium text-text">{message}</p>
+                <p className="mt-1 text-muted">{count} occurrences</p>
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article className="glass rounded-2xl p-5">
+          <h3 className="text-lg font-semibold">Service Activity</h3>
+          <ul className="mt-3 space-y-3 text-sm">
+            {serviceVolumeRows.map(([service, count]) => (
+              <li key={service} className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2">
+                <span className="text-muted">{service}</span>
+                <span className="font-medium text-text">{count} records</span>
+              </li>
+            ))}
+          </ul>
         </article>
       </section>
     </AnimatedContainer>
