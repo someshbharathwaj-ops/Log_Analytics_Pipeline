@@ -65,3 +65,4 @@ def test_analyze_sample_filters_by_service() -> None:
     payload = response.json()
     assert payload["total_records"] > 0
     assert set(payload["service_volume"]) == {"billing-service"}
+    assert payload["applied_service"] == "billing-service"

@@ -25,6 +25,7 @@ class AnalyticsResponse(BaseModel):
     impacted_service_count: int
     source: str
     applied_level: str | None
+    applied_service: str | None
     dominant_level: str | None
     peak_error_window: str | None
     noisiest_ip: str | None

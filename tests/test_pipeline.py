@@ -94,3 +94,4 @@ def test_run_pipeline_from_content_filters_by_service() -> None:
     assert result.total_records == 1
     assert result.service_volume == {"billing": 1}
     assert result.log_level_distribution == {"WARN": 1}
+    assert result.applied_service == "billing"

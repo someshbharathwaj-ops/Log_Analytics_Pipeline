@@ -36,6 +36,7 @@ class PipelineResult:
     impacted_service_count: int
     source: str
     applied_level: str | None
+    applied_service: str | None
     dominant_level: str | None
     peak_error_window: str | None
     noisiest_ip: str | None
@@ -153,6 +154,7 @@ def build_result(records: tuple[LogRecord, ...], *, skipped_records: int, source
         impacted_service_count=len(service_volume),
         source=source,
         applied_level=level,
+        applied_service=None,
         dominant_level=analytics.dominant_level(records),
         peak_error_window=analytics.peak_error_window(records),
         noisiest_ip=max(error_counts_per_ip.items(), key=lambda item: (item[1], item[0]))[0] if error_counts_per_ip else None,
@@ -186,12 +188,13 @@ def run_pipeline(file_path: str | Path, level: str | None = None, service: str |
     if service:
         processed_records = tuple(filter(build_service_filter(service), processed_records))
 
-    return build_result(
+    result = build_result(
         processed_records,
         skipped_records=skipped_records,
         source=str(path),
         level=level,
     )
+    return PipelineResult(**{**result.__dict__, "applied_service": service})
 
 
 def run_pipeline_from_content(content: str, level: str | None = None, service: str | None = None) -> PipelineResult:
@@ -220,4 +223,10 @@ def run_pipeline_from_content(content: str, level: str | None = None, service: s
         source="upload",
         level=level,
     )
-    return PipelineResult(**{**result.__dict__, "top_failing_services": top_five})
+    return PipelineResult(
+        **{
+            **result.__dict__,
+            "applied_service": service,
+            "top_failing_services": top_five,
+        }
+    )
