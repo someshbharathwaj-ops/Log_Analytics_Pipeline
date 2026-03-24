@@ -3,7 +3,7 @@ from __future__ import annotations
 from backend.pipeline.functional_utils import curry_binary, recursive_map
 import pytest
 
-from backend.pipeline.pipeline import normalize_level, parse_log_line, run_pipeline_from_content
+from backend.pipeline.pipeline import normalize_level, normalize_service, parse_log_line, run_pipeline_from_content
 
 
 def test_closure_level_filter() -> None:
@@ -54,6 +54,11 @@ def test_normalize_level_rejects_unknown_value() -> None:
         normalize_level("TRACE")
 
 
+def test_normalize_service_trims_blank_input() -> None:
+    assert normalize_service(" auth ") == "auth"
+    assert normalize_service("   ") is None
+
+
 def test_run_pipeline_from_content_reports_skipped_records_and_insights() -> None:
     content = "\n".join(
         [
@@ -75,3 +80,17 @@ def test_run_pipeline_from_content_reports_skipped_records_and_insights() -> Non
     assert result.health_status == "critical"
     assert result.service_volume == {"auth": 1, "billing": 1}
     assert result.top_error_messages == [("Login failed", 1)]
+
+
+def test_run_pipeline_from_content_filters_by_service() -> None:
+    content = "\n".join(
+        [
+            "2026-03-01T10:00:00Z|ERROR|auth|10.0.0.1|Login failed",
+            "2026-03-01T10:05:00Z|WARN|billing|10.0.0.2|Retry threshold nearing",
+        ]
+    )
+    result = run_pipeline_from_content(content, service="billing")
+
+    assert result.total_records == 1
+    assert result.service_volume == {"billing": 1}
+    assert result.log_level_distribution == {"WARN": 1}

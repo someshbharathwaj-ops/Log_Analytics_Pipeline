@@ -56,3 +56,12 @@ def test_analyze_sample_exposes_enhanced_summary() -> None:
     assert "top_error_messages" in payload
     assert "clean_record_ratio" in payload
     assert payload["source"].endswith("data\\server_logs.txt") or payload["source"].endswith("data/server_logs.txt")
+
+
+def test_analyze_sample_filters_by_service() -> None:
+    response = client.get("/api/analytics/analyze-sample", params={"service": "billing-service"})
+    assert response.status_code == 200
+
+    payload = response.json()
+    assert payload["total_records"] > 0
+    assert set(payload["service_volume"]) == {"billing-service"}

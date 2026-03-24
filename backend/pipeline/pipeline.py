@@ -87,6 +87,12 @@ def build_level_filter(level: str) -> Callable[[LogRecord], bool]:
     return lambda record: record.get("level", "").upper() == normalized
 
 
+def build_service_filter(service: str) -> Callable[[LogRecord], bool]:
+    """Closure that captures a service name for filtering."""
+    normalized = service.casefold()
+    return lambda record: record.get("service", "").casefold() == normalized
+
+
 def normalize_level(level: str | None) -> str | None:
     """Normalize and validate an optional level filter."""
     if level is None:
@@ -100,6 +106,18 @@ def normalize_level(level: str | None) -> str | None:
         raise ValueError(
             f"Unsupported level '{level}'. Expected one of: {', '.join(sorted(SUPPORTED_LEVELS))}."
         )
+
+    return normalized
+
+
+def normalize_service(service: str | None) -> str | None:
+    """Normalize an optional service filter."""
+    if service is None:
+        return None
+
+    normalized = service.strip()
+    if not normalized:
+        return None
 
     return normalized
 
@@ -151,9 +169,10 @@ def stream_records(file_path: str | Path) -> Iterator[LogRecord]:
     )  # type: ignore[arg-type]
 
 
-def run_pipeline(file_path: str | Path, level: str | None = None) -> PipelineResult:
+def run_pipeline(file_path: str | Path, level: str | None = None, service: str | None = None) -> PipelineResult:
     """Run the full analytics pipeline for a log file."""
     level = normalize_level(level)
+    service = normalize_service(service)
     path = Path(file_path)
     raw_lines = tuple(line for line in read_lines_lazy(path) if line.strip())
     parse_step = partial(map, parse_or_skip)
@@ -164,6 +183,8 @@ def run_pipeline(file_path: str | Path, level: str | None = None) -> PipelineRes
 
     if level:
         processed_records = tuple(filter(build_level_filter(level), processed_records))
+    if service:
+        processed_records = tuple(filter(build_service_filter(service), processed_records))
 
     return build_result(
         processed_records,
@@ -173,9 +194,10 @@ def run_pipeline(file_path: str | Path, level: str | None = None) -> PipelineRes
     )
 
 
-def run_pipeline_from_content(content: str, level: str | None = None) -> PipelineResult:
+def run_pipeline_from_content(content: str, level: str | None = None, service: str | None = None) -> PipelineResult:
     """Run the same pipeline for in-memory text content."""
     level = normalize_level(level)
+    service = normalize_service(service)
     lines = tuple(line.strip() for line in content.splitlines() if line.strip())
     parse_step = partial(map, parse_or_skip)
     valid_step = partial(filter, not_none)
@@ -186,6 +208,9 @@ def run_pipeline_from_content(content: str, level: str | None = None) -> Pipelin
     if level:
         level_filter = build_level_filter(level)
         records = tuple(filter(level_filter, records))
+    if service:
+        service_filter = build_service_filter(service)
+        records = tuple(filter(service_filter, records))
 
     curried_top = curry_binary(analytics.top_failing_services)
     top_five = curried_top(records)(5)

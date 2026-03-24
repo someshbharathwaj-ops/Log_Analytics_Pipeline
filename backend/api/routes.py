@@ -22,6 +22,13 @@ LEVEL_QUERY = Annotated[
         examples=["ERROR", "WARN", "INFO", "DEBUG"],
     ),
 ]
+SERVICE_QUERY = Annotated[
+    str | None,
+    Query(
+        description="Optional service filter.",
+        examples=["auth-service", "billing-service"],
+    ),
+]
 
 
 def decode_upload_content(raw: bytes) -> str:
@@ -41,7 +48,11 @@ def health_check() -> HealthResponse:
 
 
 @router.post("/analyze", response_model=AnalyticsResponse)
-async def analyze_logs(file: UploadFile = File(...), level: LEVEL_QUERY = None) -> AnalyticsResponse:
+async def analyze_logs(
+    file: UploadFile = File(...),
+    level: LEVEL_QUERY = None,
+    service: SERVICE_QUERY = None,
+) -> AnalyticsResponse:
     """Analyze uploaded logs and return aggregate metrics."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="A log file must be provided.")
@@ -59,20 +70,20 @@ async def analyze_logs(file: UploadFile = File(...), level: LEVEL_QUERY = None) 
         raise HTTPException(status_code=400, detail="Uploaded log file is empty.")
 
     try:
-        result: PipelineResult = run_pipeline_from_content(content, level=level)
+        result: PipelineResult = run_pipeline_from_content(content, level=level, service=service)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     return AnalyticsResponse(**asdict(result))
 
 
 @router.get("/analyze-sample", response_model=AnalyticsResponse)
-def analyze_sample(level: LEVEL_QUERY = None) -> AnalyticsResponse:
+def analyze_sample(level: LEVEL_QUERY = None, service: SERVICE_QUERY = None) -> AnalyticsResponse:
     """Analyze the sample dataset in data/server_logs.txt."""
     if not SAMPLE_DATA_PATH.exists():
         raise HTTPException(status_code=404, detail="Sample data file not found.")
 
     try:
-        result: PipelineResult = run_pipeline(SAMPLE_DATA_PATH, level=level)
+        result: PipelineResult = run_pipeline(SAMPLE_DATA_PATH, level=level, service=service)
     except ValueError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     return AnalyticsResponse(**asdict(result))
