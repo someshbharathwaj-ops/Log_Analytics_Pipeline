@@ -1,4 +1,4 @@
-import type { AnalyticsResponse, LevelFilter } from "@/lib/types";
+import type { AnalyticsResponse, LevelFilter, ServiceFilter } from "@/lib/types";
 
 const API_BASE = "/api/analytics";
 
@@ -16,11 +16,18 @@ async function parseResponse(response: Response): Promise<AnalyticsResponse> {
   return (await response.json()) as AnalyticsResponse;
 }
 
-export async function fetchSampleAnalytics(level: LevelFilter): Promise<AnalyticsResponse> {
-  const params = new URLSearchParams();
+function appendFilters(params: URLSearchParams, level: LevelFilter, service: ServiceFilter): void {
   if (level) {
     params.set("level", level);
   }
+  if (service.trim()) {
+    params.set("service", service.trim());
+  }
+}
+
+export async function fetchSampleAnalytics(level: LevelFilter, service: ServiceFilter): Promise<AnalyticsResponse> {
+  const params = new URLSearchParams();
+  appendFilters(params, level, service);
   const query = params.toString();
   const response = await fetch(`${API_BASE}/sample${query ? `?${query}` : ""}`, {
     cache: "no-store",
@@ -29,14 +36,16 @@ export async function fetchSampleAnalytics(level: LevelFilter): Promise<Analytic
   return parseResponse(response);
 }
 
-export async function uploadAnalytics(file: File, level: LevelFilter): Promise<AnalyticsResponse> {
+export async function uploadAnalytics(
+  file: File,
+  level: LevelFilter,
+  service: ServiceFilter,
+): Promise<AnalyticsResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
   const params = new URLSearchParams();
-  if (level) {
-    params.set("level", level);
-  }
+  appendFilters(params, level, service);
 
   const query = params.toString();
   const response = await fetch(`${API_BASE}/analyze${query ? `?${query}` : ""}`, {
