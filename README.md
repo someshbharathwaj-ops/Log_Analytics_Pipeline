@@ -61,10 +61,10 @@ Log_Analytics_Pipeline
 
 ## What Is New
 
-- Richer backend analytics output with error-share, dominant level, noisiest IP, peak error window, and health classification
-- Processing metadata including source tracking, generated timestamp, and skipped malformed record counts
-- Next.js dashboard updates for health badges, operational summaries, service-share views, upload validation, and saved user preferences
-- Better developer ergonomics with `pytest.ini`, improved `.gitignore`, and expanded API tests
+- Richer backend analytics output with service volume, recurring error messages, clean-record ratio, unique IP counts, and service-scoped filtering
+- Processing metadata including source tracking, generated timestamp, skipped malformed record counts, and applied filter context
+- Next.js dashboard updates for service-aware filtering, active scope visibility, deeper error diagnostics, and improved search/sorting feedback
+- Better developer ergonomics with expanded API and pipeline coverage plus production build verification
 
 ## Log Format
 
@@ -105,8 +105,8 @@ uvicorn backend.app:app --reload
 Backend endpoints:
 - `GET /`
 - `GET /api/analytics/health`
-- `POST /api/analytics/analyze` (multipart file upload, optional `level` query param)
-- `GET /api/analytics/analyze-sample` (optional `level` query param)
+- `POST /api/analytics/analyze` (multipart file upload, optional `level` and `service` query params)
+- `GET /api/analytics/analyze-sample` (optional `level` and `service` query params)
 
 ## Run Frontend Dashboard
 
@@ -126,11 +126,11 @@ $env:BACKEND_URL="http://127.0.0.1:8000"
 ```
 
 Dashboard capabilities:
-- Dashboard overview with health badge, error rate, skipped record count, and source metadata
-- Log analytics upload flow with client-side file validation
-- Error insights page with service share analysis and operational diagnosis
-- IP activity page with ranked offenders and error-share breakdown
-- Settings page with saved auto-refresh and table-density preferences
+- Dashboard overview with health badge, error rate, clean-record quality, source metadata, and filter-scope summaries
+- Log analytics upload flow with client-side file validation plus level and service filters
+- Error insights page with service share analysis, recurring error messages, and operational diagnosis
+- IP activity page with ranked offenders, unique IP coverage, and error-share breakdown
+- Settings page with saved auto-refresh, table-density preferences, and active filter visibility
 
 ## Run Tests
 
