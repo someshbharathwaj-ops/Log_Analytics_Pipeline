@@ -17,7 +17,7 @@ export default function IpActivityPage() {
   }
 
   const ipData = Object.entries(data.error_counts_per_ip)
-    .sort(([, a], [, b]) => b - a)
+    .sort(([, left], [, right]) => right - left)
     .map(([ip, errors]) => ({
       ip,
       errors,
@@ -30,6 +30,23 @@ export default function IpActivityPage() {
         <h2 className="text-xl font-semibold">IP Activity</h2>
         <p className="text-sm text-muted">Traffic behavior and high-error source addresses.</p>
       </div>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Unique Error IPs</p>
+          <p className="mt-2 text-4xl font-semibold text-text">{data.unique_ip_count}</p>
+        </article>
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Noisiest IP</p>
+          <p className="mt-2 text-2xl font-semibold text-text">{data.noisiest_ip ?? "None"}</p>
+        </article>
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Largest Error Share</p>
+          <p className="mt-2 text-4xl font-semibold text-text">
+            {formatPercent(ipData[0]?.share ?? 0)}
+          </p>
+        </article>
+      </section>
 
       <ChartWidget title="Top IP Activity" subtitle="Horizontal bar distribution of error counts">
         <div className="h-80">
@@ -50,7 +67,7 @@ export default function IpActivityPage() {
             <p className="text-sm text-muted">Rank #{index + 1}</p>
             <p className="mt-2 text-xl font-semibold">{row.ip}</p>
             <p className="mt-2 text-sm text-muted">
-              {row.errors} errors • {formatPercent(row.share)} of observed errors
+              {row.errors} errors | {formatPercent(row.share)} of observed errors
             </p>
           </article>
         ))}
