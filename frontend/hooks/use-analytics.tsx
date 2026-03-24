@@ -5,15 +5,17 @@ import toast from "react-hot-toast";
 
 import { useDashboardPreferences } from "@/hooks/use-dashboard-preferences";
 import { fetchSampleAnalytics, uploadAnalytics } from "@/lib/api";
-import type { AnalyticsResponse, LevelFilter } from "@/lib/types";
+import type { AnalyticsResponse, LevelFilter, ServiceFilter } from "@/lib/types";
 
 type AnalyticsContextValue = {
   data: AnalyticsResponse | null;
   level: LevelFilter;
+  service: ServiceFilter;
   loading: boolean;
   uploading: boolean;
   lastUpdated: string | null;
   setLevel: (level: LevelFilter) => void;
+  setService: (service: ServiceFilter) => void;
   refresh: () => Promise<void>;
   uploadFile: (file: File) => Promise<void>;
 };
@@ -24,6 +26,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const { autoRefresh } = useDashboardPreferences();
   const [data, setData] = useState<AnalyticsResponse | null>(null);
   const [level, setLevel] = useState<LevelFilter>("");
+  const [service, setService] = useState<ServiceFilter>("");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
@@ -31,7 +34,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const refresh = async () => {
     setLoading(true);
     try {
-      const result = await fetchSampleAnalytics(level);
+      const result = await fetchSampleAnalytics(level, service);
       setData(result);
       setLastUpdated(new Date().toISOString());
       toast.success("Analytics refreshed");
@@ -46,7 +49,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const uploadFile = async (file: File) => {
     setUploading(true);
     try {
-      const result = await uploadAnalytics(file, level);
+      const result = await uploadAnalytics(file, level, service);
       setData(result);
       setLastUpdated(new Date().toISOString());
       toast.success("Upload analyzed successfully");
@@ -60,7 +63,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     void refresh();
-  }, [level]);
+  }, [level, service]);
 
   useEffect(() => {
     if (!autoRefresh) {
@@ -72,11 +75,11 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     }, 60_000);
 
     return () => window.clearInterval(intervalId);
-  }, [autoRefresh, level]);
+  }, [autoRefresh, level, service]);
 
   const value = useMemo(
-    () => ({ data, level, loading, uploading, lastUpdated, setLevel, refresh, uploadFile }),
-    [data, level, loading, uploading, lastUpdated],
+    () => ({ data, level, service, loading, uploading, lastUpdated, setLevel, setService, refresh, uploadFile }),
+    [data, level, service, loading, uploading, lastUpdated],
   );
 
   return <AnalyticsContext.Provider value={value}>{children}</AnalyticsContext.Provider>;
