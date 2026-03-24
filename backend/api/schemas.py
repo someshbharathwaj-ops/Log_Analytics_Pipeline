@@ -12,12 +12,17 @@ class HealthResponse(BaseModel):
 class AnalyticsResponse(BaseModel):
     error_counts_per_ip: dict[str, int]
     log_level_distribution: dict[str, int]
+    service_volume: dict[str, int]
     top_failing_services: list[tuple[str, int]]
+    top_error_messages: list[tuple[str, int]]
     service_error_share: dict[str, float]
     error_timeline: dict[str, int]
     total_errors: int
     total_records: int
     skipped_records: int
+    clean_record_ratio: float
+    unique_ip_count: int
+    impacted_service_count: int
     source: str
     applied_level: str | None
     dominant_level: str | None

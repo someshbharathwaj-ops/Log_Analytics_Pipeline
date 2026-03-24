@@ -52,4 +52,7 @@ def test_analyze_sample_exposes_enhanced_summary() -> None:
     assert "health_status" in payload
     assert "generated_at" in payload
     assert "service_error_share" in payload
+    assert "service_volume" in payload
+    assert "top_error_messages" in payload
+    assert "clean_record_ratio" in payload
     assert payload["source"].endswith("data\\server_logs.txt") or payload["source"].endswith("data/server_logs.txt")

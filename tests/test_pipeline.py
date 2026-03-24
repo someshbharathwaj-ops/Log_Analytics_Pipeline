@@ -66,7 +66,12 @@ def test_run_pipeline_from_content_reports_skipped_records_and_insights() -> Non
 
     assert result.total_records == 2
     assert result.skipped_records == 1
+    assert result.clean_record_ratio == pytest.approx(66.67)
+    assert result.unique_ip_count == 2
+    assert result.impacted_service_count == 2
     assert result.source == "upload"
     assert result.noisiest_ip == "10.0.0.1"
     assert result.dominant_level in {"ERROR", "WARN"}
     assert result.health_status == "critical"
+    assert result.service_volume == {"auth": 1, "billing": 1}
+    assert result.top_error_messages == [("Login failed", 1)]

@@ -23,12 +23,17 @@ class PipelineResult:
 
     error_counts_per_ip: dict[str, int]
     log_level_distribution: dict[str, int]
+    service_volume: dict[str, int]
     top_failing_services: list[tuple[str, int]]
+    top_error_messages: list[tuple[str, int]]
     service_error_share: dict[str, float]
     error_timeline: dict[str, int]
     total_errors: int
     total_records: int
     skipped_records: int
+    clean_record_ratio: float
+    unique_ip_count: int
+    impacted_service_count: int
     source: str
     applied_level: str | None
     dominant_level: str | None
@@ -111,17 +116,23 @@ def build_result(records: tuple[LogRecord, ...], *, skipped_records: int, source
     """Create a consistent response payload from processed records."""
     error_counts_per_ip, total_errors = analytics.count_errors_per_ip_and_total(records)
     top_services = analytics.top_failing_services(records)
+    service_volume = analytics.service_volume(records)
     service_share = analytics.service_error_share(records)
 
     return PipelineResult(
         error_counts_per_ip=error_counts_per_ip,
         log_level_distribution=analytics.log_level_distribution(records),
+        service_volume=service_volume,
         top_failing_services=top_services,
+        top_error_messages=analytics.top_error_messages(records),
         service_error_share=service_share,
         error_timeline=analytics.error_timeline_by_hour(records),
         total_errors=total_errors,
         total_records=len(records),
         skipped_records=skipped_records,
+        clean_record_ratio=analytics.clean_record_ratio(len(records), skipped_records),
+        unique_ip_count=len({record["ip"] for record in records}),
+        impacted_service_count=len(service_volume),
         source=source,
         applied_level=level,
         dominant_level=analytics.dominant_level(records),
