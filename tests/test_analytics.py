@@ -9,6 +9,7 @@ from backend.pipeline.analytics import (
     log_level_distribution,
     peak_error_window,
     recursive_total,
+    service_volume,
     service_error_share,
     top_failing_services,
 )
@@ -55,6 +56,10 @@ def test_log_level_distribution() -> None:
 
 def test_top_failing_services() -> None:
     assert top_failing_services(SAMPLE_RECORDS, top_n=1) == [("auth", 2)]
+
+
+def test_service_volume() -> None:
+    assert service_volume(SAMPLE_RECORDS) == {"auth": 2, "billing": 1}
 
 
 def test_error_timeline_by_hour() -> None:

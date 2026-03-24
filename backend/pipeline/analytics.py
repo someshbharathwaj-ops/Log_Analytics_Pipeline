@@ -48,6 +48,15 @@ def log_level_distribution(records: Iterable[LogRecord]) -> dict[str, int]:
     )
 
 
+def service_volume(records: Iterable[LogRecord]) -> dict[str, int]:
+    """Aggregate all records by service."""
+    return reduce(
+        lambda acc, record: _increment_counter(acc, record.get("service", "unknown")),
+        records,
+        {},
+    )
+
+
 def top_failing_services(records: Iterable[LogRecord], top_n: int = 5) -> list[tuple[str, int]]:
     """Return top failing services sorted by error count descending."""
     error_counts = reduce(
