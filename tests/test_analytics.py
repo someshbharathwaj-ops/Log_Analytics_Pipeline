@@ -11,6 +11,7 @@ from backend.pipeline.analytics import (
     recursive_total,
     service_volume,
     service_error_share,
+    top_error_messages,
     top_failing_services,
 )
 
@@ -60,6 +61,10 @@ def test_top_failing_services() -> None:
 
 def test_service_volume() -> None:
     assert service_volume(SAMPLE_RECORDS) == {"auth": 2, "billing": 1}
+
+
+def test_top_error_messages() -> None:
+    assert top_error_messages(SAMPLE_RECORDS, top_n=1) == [("Login failed", 1)]
 
 
 def test_error_timeline_by_hour() -> None:

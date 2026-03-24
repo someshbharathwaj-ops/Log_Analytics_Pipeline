@@ -67,6 +67,16 @@ def top_failing_services(records: Iterable[LogRecord], top_n: int = 5) -> list[t
     return sorted(error_counts.items(), key=lambda pair: pair[1], reverse=True)[:top_n]
 
 
+def top_error_messages(records: Iterable[LogRecord], top_n: int = 5) -> list[tuple[str, int]]:
+    """Return the most frequent error messages."""
+    error_counts = reduce(
+        lambda acc, record: _increment_counter(acc, record.get("message", "unknown")),
+        filter(has_level("ERROR"), records),
+        {},
+    )
+    return sorted(error_counts.items(), key=lambda pair: (pair[1], pair[0]), reverse=True)[:top_n]
+
+
 def error_timeline_by_hour(records: Iterable[LogRecord]) -> dict[str, int]:
     """Build a timeline grouped by hour (YYYY-MM-DD HH:00)."""
     def hour_bucket(timestamp: str) -> str:
