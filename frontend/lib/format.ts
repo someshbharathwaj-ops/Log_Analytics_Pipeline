@@ -1,5 +1,9 @@
 export const LEVEL_OPTIONS = ["", "ERROR", "WARN", "INFO", "DEBUG"] as const;
 
+export function buildServiceOptions(services: Record<string, number>): string[] {
+  return ["", ...Object.keys(services).sort((left, right) => left.localeCompare(right))];
+}
+
 export function formatCompactNumber(value: number): string {
   return new Intl.NumberFormat("en-US", {
     notation: "compact",
