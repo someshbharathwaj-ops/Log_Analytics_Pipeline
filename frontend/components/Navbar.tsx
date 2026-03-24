@@ -8,7 +8,7 @@ import { useAnalytics } from "@/hooks/use-analytics";
 import { formatDateLabel } from "@/lib/format";
 
 export function Navbar() {
-  const { refresh, loading, lastUpdated, data } = useAnalytics();
+  const { refresh, loading, lastUpdated, data, service, level } = useAnalytics();
   const { autoRefresh } = useDashboardPreferences();
 
   return (
@@ -16,12 +16,15 @@ export function Navbar() {
       <div>
         <p className="text-sm text-muted">Log Analytics Pipeline</p>
         <h1 className="text-lg font-semibold">Operational Intelligence</h1>
+        <p className="text-xs text-muted">
+          Scope: {level || "ALL"} | {service || "all services"}
+        </p>
       </div>
 
       <div className="flex items-center gap-2">
         {data ? <HealthBadge status={data.health_status} /> : null}
         <span className="hidden text-xs text-muted lg:inline">
-          Updated {formatDateLabel(lastUpdated)}{autoRefresh ? " • Auto refresh on" : ""}
+          Updated {formatDateLabel(lastUpdated)}{autoRefresh ? " | Auto refresh on" : ""}
         </span>
         <button
           onClick={() => void refresh()}
