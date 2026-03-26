@@ -4,6 +4,7 @@ import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recha
 
 import { AnimatedContainer } from "@/components/AnimatedContainer";
 import { ChartWidget } from "@/components/ChartWidget";
+import { EmptyStatePanel } from "@/components/EmptyStatePanel";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { LogTable } from "@/components/LogTable";
 import { useAnalytics } from "@/hooks/use-analytics";
@@ -23,6 +24,7 @@ export default function IpActivityPage() {
       errors,
       share: data.total_errors > 0 ? (errors / data.total_errors) * 100 : 0,
     }));
+  const averageErrorsPerIp = ipData.length > 0 ? data.total_errors / ipData.length : 0;
 
   return (
     <AnimatedContainer className="space-y-4">
@@ -31,7 +33,7 @@ export default function IpActivityPage() {
         <p className="text-sm text-muted">Traffic behavior and high-error source addresses.</p>
       </div>
 
-      <section className="grid gap-4 lg:grid-cols-3">
+      <section className="grid gap-4 lg:grid-cols-4">
         <article className="glass rounded-2xl p-5">
           <p className="text-sm text-muted">Unique Error IPs</p>
           <p className="mt-2 text-4xl font-semibold text-text">{data.unique_ip_count}</p>
@@ -46,18 +48,29 @@ export default function IpActivityPage() {
             {formatPercent(ipData[0]?.share ?? 0)}
           </p>
         </article>
+        <article className="glass rounded-2xl p-5">
+          <p className="text-sm text-muted">Avg Errors per IP</p>
+          <p className="mt-2 text-4xl font-semibold text-text">{averageErrorsPerIp.toFixed(1)}</p>
+        </article>
       </section>
 
       <ChartWidget title="Top IP Activity" subtitle="Horizontal bar distribution of error counts">
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={ipData} layout="vertical" margin={{ left: 20 }}>
-              <XAxis type="number" stroke="#9ca8c3" />
-              <YAxis dataKey="ip" type="category" width={130} stroke="#9ca8c3" />
-              <Tooltip />
-              <Bar dataKey="errors" radius={[0, 8, 8, 0]} fill="#5ba8ff" />
-            </BarChart>
-          </ResponsiveContainer>
+          {ipData.length === 0 ? (
+            <EmptyStatePanel
+              title="No IP error activity"
+              description="There are no error-bearing IP addresses in the current filter scope."
+            />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ipData} layout="vertical" margin={{ left: 20 }}>
+                <XAxis type="number" stroke="#9ca8c3" />
+                <YAxis dataKey="ip" type="category" width={130} stroke="#9ca8c3" />
+                <Tooltip />
+                <Bar dataKey="errors" radius={[0, 8, 8, 0]} fill="#5ba8ff" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </ChartWidget>
 
@@ -71,6 +84,11 @@ export default function IpActivityPage() {
             </p>
           </article>
         ))}
+        {ipData.length === 0 ? (
+          <article className="glass rounded-2xl p-5 lg:col-span-3">
+            <p className="text-sm text-muted">Top ranks will appear here once error activity is detected.</p>
+          </article>
+        ) : null}
       </section>
 
       <LogTable
