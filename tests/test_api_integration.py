@@ -53,8 +53,11 @@ def test_analyze_sample_exposes_enhanced_summary() -> None:
     assert "generated_at" in payload
     assert "service_error_share" in payload
     assert "service_volume" in payload
+    assert "service_health" in payload
     assert "top_error_messages" in payload
     assert "clean_record_ratio" in payload
+    assert "record_timeline" in payload
+    assert "observation_window_hours" in payload
     assert payload["source"].endswith("data\\server_logs.txt") or payload["source"].endswith("data/server_logs.txt")
 
 
