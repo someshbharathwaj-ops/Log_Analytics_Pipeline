@@ -7,11 +7,12 @@ import { formatCompactNumber } from "@/lib/format";
 type StatsCardProps = {
   label: string;
   value: number;
+  displayValue?: string;
   tone?: "default" | "danger";
   suffix?: string;
 };
 
-export function StatsCard({ label, value, tone = "default", suffix = "" }: StatsCardProps) {
+export function StatsCard({ label, value, displayValue, tone = "default", suffix = "" }: StatsCardProps) {
   return (
     <motion.article
       whileHover={{ y: -4, scale: 1.01 }}
@@ -20,7 +21,7 @@ export function StatsCard({ label, value, tone = "default", suffix = "" }: Stats
     >
       <p className="text-sm text-muted">{label}</p>
       <p className={`mt-2 text-3xl font-semibold ${tone === "danger" ? "text-danger" : "text-text"}`}>
-        {formatCompactNumber(value)}{suffix}
+        {displayValue ?? `${formatCompactNumber(value)}${suffix}`}
       </p>
     </motion.article>
   );
