@@ -22,5 +22,12 @@ export function buildLogRows(data: AnalyticsResponse): Array<{ key: string; cate
     value,
   }));
 
-  return [...fromIps, ...fromLevels, ...fromServices].sort((a, b) => b.value - a.value);
+  const fromHealth = Object.entries(data.service_health).map(([label, status]) => ({
+    key: `service-health-${label}`,
+    category: "Service Health",
+    label: `${label} (${status})`,
+    value: data.service_volume[label] ?? 0,
+  }));
+
+  return [...fromIps, ...fromLevels, ...fromServices, ...fromHealth].sort((a, b) => b.value - a.value);
 }
