@@ -79,7 +79,14 @@ def test_run_pipeline_from_content_reports_skipped_records_and_insights() -> Non
     assert result.dominant_level in {"ERROR", "WARN"}
     assert result.health_status == "critical"
     assert result.service_volume == {"auth": 1, "billing": 1}
+    assert result.service_health == {"auth": "critical", "billing": "stable"}
     assert result.top_error_messages == [("Login failed", 1)]
+    assert result.error_free_service_count == 1
+    assert result.busiest_service in {"auth", "billing"}
+    assert result.first_seen_at == "2026-03-01T10:00:00Z"
+    assert result.last_seen_at == "2026-03-01T10:05:00Z"
+    assert result.observation_window_hours == pytest.approx(0.08)
+    assert result.record_timeline == {"2026-03-01T10:00": 2}
 
 
 def test_run_pipeline_from_content_filters_by_service() -> None:
