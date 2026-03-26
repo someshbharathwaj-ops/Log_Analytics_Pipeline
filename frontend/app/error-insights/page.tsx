@@ -4,10 +4,11 @@ import { ResponsiveContainer, Tooltip, Treemap } from "recharts";
 
 import { AnimatedContainer } from "@/components/AnimatedContainer";
 import { ChartWidget } from "@/components/ChartWidget";
+import { EmptyStatePanel } from "@/components/EmptyStatePanel";
 import { HealthBadge } from "@/components/HealthBadge";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { useAnalytics } from "@/hooks/use-analytics";
-import { formatPercent } from "@/lib/format";
+import { formatHours, formatPercent } from "@/lib/format";
 
 export default function ErrorInsightsPage() {
   const { data, loading } = useAnalytics();
@@ -18,6 +19,7 @@ export default function ErrorInsightsPage() {
 
   const serviceData = data.top_failing_services.map(([name, size]) => ({ name, size }));
   const serviceVolumeRows = Object.entries(data.service_volume).sort(([, left], [, right]) => right - left);
+  const serviceHealthRows = Object.entries(data.service_health);
   const errorRate = data.total_records > 0 ? ((data.total_errors / data.total_records) * 100).toFixed(2) : "0.00";
   const diagnosis =
     data.health_status === "critical"
@@ -55,9 +57,16 @@ export default function ErrorInsightsPage() {
 
       <ChartWidget title="Top Failing Services" subtitle="Treemap by error count">
         <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <Treemap data={serviceData} dataKey="size" stroke="#0f172a" fill="#ff6f91" />
-          </ResponsiveContainer>
+          {serviceData.length === 0 ? (
+            <EmptyStatePanel
+              title="No failing services in scope"
+              description="This slice does not contain any error-bearing services yet."
+            />
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <Treemap data={serviceData} dataKey="size" stroke="#0f172a" fill="#ff6f91" />
+            </ResponsiveContainer>
+          )}
         </div>
       </ChartWidget>
 
@@ -100,6 +109,10 @@ export default function ErrorInsightsPage() {
               <dt className="text-muted">Dominant Level</dt>
               <dd className="font-medium text-text">{data.dominant_level ?? "None"}</dd>
             </div>
+            <div className="flex items-center justify-between rounded-lg border border-white/10 px-3 py-2">
+              <dt className="text-muted">Observation Window</dt>
+              <dd className="font-medium text-text">{formatHours(data.observation_window_hours)}</dd>
+            </div>
           </dl>
         </article>
       </section>
@@ -107,14 +120,23 @@ export default function ErrorInsightsPage() {
       <section className="grid gap-4 lg:grid-cols-2">
         <article className="glass rounded-2xl p-5">
           <h3 className="text-lg font-semibold">Frequent Error Messages</h3>
-          <ul className="mt-3 space-y-3 text-sm">
-            {data.top_error_messages.map(([message, count]) => (
-              <li key={message} className="rounded-lg border border-white/10 px-3 py-2">
-                <p className="font-medium text-text">{message}</p>
-                <p className="mt-1 text-muted">{count} occurrences</p>
-              </li>
-            ))}
-          </ul>
+          {data.top_error_messages.length === 0 ? (
+            <div className="mt-3">
+              <EmptyStatePanel
+                title="No recurring error messages"
+                description="No error records are present in the selected slice."
+              />
+            </div>
+          ) : (
+            <ul className="mt-3 space-y-3 text-sm">
+              {data.top_error_messages.map(([message, count]) => (
+                <li key={message} className="rounded-lg border border-white/10 px-3 py-2">
+                  <p className="font-medium text-text">{message}</p>
+                  <p className="mt-1 text-muted">{count} occurrences</p>
+                </li>
+              ))}
+            </ul>
+          )}
         </article>
 
         <article className="glass rounded-2xl p-5">
@@ -129,6 +151,24 @@ export default function ErrorInsightsPage() {
           </ul>
         </article>
       </section>
+
+      <article className="glass rounded-2xl p-5">
+        <h3 className="text-lg font-semibold">Service Health Breakdown</h3>
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {serviceHealthRows.map(([serviceName, status]) => (
+            <div
+              key={serviceName}
+              className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+            >
+              <div>
+                <p className="font-medium text-text">{serviceName}</p>
+                <p className="text-sm text-muted">{data.service_volume[serviceName] ?? 0} records observed</p>
+              </div>
+              <HealthBadge status={status} />
+            </div>
+          ))}
+        </div>
+      </article>
     </AnimatedContainer>
   );
 }
