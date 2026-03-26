@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 from backend.pipeline.analytics import (
+    busiest_service,
     clean_record_ratio,
     classify_health_status,
     count_errors_per_ip_and_total,
     count_errors_per_ip,
     dominant_level,
+    error_free_service_count,
     error_timeline_by_hour,
     log_level_distribution,
+    observation_window_hours,
     peak_error_window,
+    record_timeline_by_hour,
     recursive_total,
     service_volume,
+    service_health_breakdown,
     service_error_share,
+    timestamp_bounds,
     top_error_messages,
     top_failing_services,
 )
@@ -65,12 +71,17 @@ def test_service_volume() -> None:
 
 
 def test_top_error_messages() -> None:
-    assert top_error_messages(SAMPLE_RECORDS, top_n=1) == [("Login failed", 1)]
+    assert top_error_messages(SAMPLE_RECORDS, top_n=1) == [("Invalid token", 1)]
 
 
 def test_error_timeline_by_hour() -> None:
     timeline = error_timeline_by_hour(SAMPLE_RECORDS)
     assert timeline["2026-03-01T10:00"] == 2
+
+
+def test_record_timeline_by_hour() -> None:
+    timeline = record_timeline_by_hour(SAMPLE_RECORDS)
+    assert timeline == {"2026-03-01T10:00": 2, "2026-03-01T11:00": 1}
 
 
 def test_recursive_total() -> None:
@@ -100,3 +111,26 @@ def test_classify_health_status() -> None:
 def test_clean_record_ratio() -> None:
     assert clean_record_ratio(8, 2) == 80.0
     assert clean_record_ratio(0, 0) == 0.0
+
+
+def test_busiest_service() -> None:
+    assert busiest_service(SAMPLE_RECORDS) == "auth"
+
+
+def test_timestamp_bounds() -> None:
+    assert timestamp_bounds(SAMPLE_RECORDS) == (
+        "2026-03-01T10:00:00Z",
+        "2026-03-01T11:00:00Z",
+    )
+
+
+def test_observation_window_hours() -> None:
+    assert observation_window_hours(SAMPLE_RECORDS) == 1.0
+
+
+def test_service_health_breakdown() -> None:
+    assert service_health_breakdown(SAMPLE_RECORDS) == {"auth": "critical", "billing": "stable"}
+
+
+def test_error_free_service_count() -> None:
+    assert error_free_service_count(SAMPLE_RECORDS) == 1
