@@ -62,8 +62,9 @@ Log_Analytics_Pipeline
 ## What Is New
 
 - Richer backend analytics output with service volume, recurring error messages, clean-record ratio, unique IP counts, and service-scoped filtering
-- Processing metadata including source tracking, generated timestamp, skipped malformed record counts, and applied filter context
-- Next.js dashboard updates for service-aware filtering, active scope visibility, deeper error diagnostics, and improved search/sorting feedback
+- Processing metadata including source tracking, generated timestamp, skipped malformed record counts, applied filter context, observation-window timestamps, and hourly traffic timelines
+- Service health classification across all observed services, including quiet-service counts and busiest-service detection
+- Next.js dashboard updates for service-aware filtering, persisted filters, quieter background refreshes, deeper error diagnostics, and resilient empty states across charts
 - Better developer ergonomics with expanded API and pipeline coverage plus production build verification
 
 ## Log Format
@@ -126,11 +127,11 @@ $env:BACKEND_URL="http://127.0.0.1:8000"
 ```
 
 Dashboard capabilities:
-- Dashboard overview with health badge, error rate, clean-record quality, source metadata, and filter-scope summaries
+- Dashboard overview with health badge, traffic-vs-error trend comparisons, service health badges, observation-span context, and filter-scope summaries
 - Log analytics upload flow with client-side file validation plus level and service filters
-- Error insights page with service share analysis, recurring error messages, and operational diagnosis
-- IP activity page with ranked offenders, unique IP coverage, and error-share breakdown
-- Settings page with saved auto-refresh, table-density preferences, and active filter visibility
+- Error insights page with service share analysis, recurring error messages, service health breakdowns, and operational diagnosis
+- IP activity page with ranked offenders, unique IP coverage, average error load, and error-share breakdown
+- Settings page with saved auto-refresh, persisted filters, table-density preferences, and operational metadata visibility
 
 ## Run Tests
 
