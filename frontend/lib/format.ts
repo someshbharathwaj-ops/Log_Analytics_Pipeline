@@ -22,6 +22,16 @@ export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
+export function formatHours(value: number): string {
+  if (value === 1) {
+    return "1 hour";
+  }
+  if (value < 1) {
+    return `${Math.round(value * 60)} min`;
+  }
+  return `${value.toFixed(1)} hours`;
+}
+
 export function formatHealthStatus(value: string): string {
   return value
     .split("-")
