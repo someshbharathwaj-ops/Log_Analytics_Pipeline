@@ -24,22 +24,29 @@ class PipelineResult:
     error_counts_per_ip: dict[str, int]
     log_level_distribution: dict[str, int]
     service_volume: dict[str, int]
+    service_health: dict[str, str]
     top_failing_services: list[tuple[str, int]]
     top_error_messages: list[tuple[str, int]]
     service_error_share: dict[str, float]
     error_timeline: dict[str, int]
+    record_timeline: dict[str, int]
     total_errors: int
     total_records: int
     skipped_records: int
     clean_record_ratio: float
     unique_ip_count: int
     impacted_service_count: int
+    error_free_service_count: int
     source: str
     applied_level: str | None
     applied_service: str | None
     dominant_level: str | None
     peak_error_window: str | None
     noisiest_ip: str | None
+    busiest_service: str | None
+    first_seen_at: str | None
+    last_seen_at: str | None
+    observation_window_hours: float
     health_status: str
     generated_at: str
 
@@ -137,27 +144,35 @@ def build_result(records: tuple[LogRecord, ...], *, skipped_records: int, source
     top_services = analytics.top_failing_services(records)
     service_volume = analytics.service_volume(records)
     service_share = analytics.service_error_share(records)
+    first_seen_at, last_seen_at = analytics.timestamp_bounds(records)
 
     return PipelineResult(
         error_counts_per_ip=error_counts_per_ip,
         log_level_distribution=analytics.log_level_distribution(records),
         service_volume=service_volume,
+        service_health=analytics.service_health_breakdown(records),
         top_failing_services=top_services,
         top_error_messages=analytics.top_error_messages(records),
         service_error_share=service_share,
         error_timeline=analytics.error_timeline_by_hour(records),
+        record_timeline=analytics.record_timeline_by_hour(records),
         total_errors=total_errors,
         total_records=len(records),
         skipped_records=skipped_records,
         clean_record_ratio=analytics.clean_record_ratio(len(records), skipped_records),
         unique_ip_count=len({record["ip"] for record in records}),
         impacted_service_count=len(service_volume),
+        error_free_service_count=analytics.error_free_service_count(records),
         source=source,
         applied_level=level,
         applied_service=None,
         dominant_level=analytics.dominant_level(records),
         peak_error_window=analytics.peak_error_window(records),
         noisiest_ip=max(error_counts_per_ip.items(), key=lambda item: (item[1], item[0]))[0] if error_counts_per_ip else None,
+        busiest_service=analytics.busiest_service(records),
+        first_seen_at=first_seen_at,
+        last_seen_at=last_seen_at,
+        observation_window_hours=analytics.observation_window_hours(records),
         health_status=analytics.classify_health_status(total_errors, len(records)),
         generated_at=datetime.now(UTC).isoformat(),
     )
