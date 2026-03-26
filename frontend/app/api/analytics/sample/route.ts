@@ -4,10 +4,14 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
 
 export async function GET(request: NextRequest) {
   const level = request.nextUrl.searchParams.get("level");
+  const service = request.nextUrl.searchParams.get("service");
   const url = new URL("/api/analytics/analyze-sample", BACKEND_URL);
 
   if (level) {
     url.searchParams.set("level", level);
+  }
+  if (service) {
+    url.searchParams.set("service", service);
   }
 
   try {
