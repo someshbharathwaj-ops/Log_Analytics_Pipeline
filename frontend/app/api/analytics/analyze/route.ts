@@ -4,11 +4,15 @@ const BACKEND_URL = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
 
 export async function POST(request: NextRequest) {
   const level = request.nextUrl.searchParams.get("level");
+  const service = request.nextUrl.searchParams.get("service");
   const formData = await request.formData();
   const url = new URL("/api/analytics/analyze", BACKEND_URL);
 
   if (level) {
     url.searchParams.set("level", level);
+  }
+  if (service) {
+    url.searchParams.set("service", service);
   }
 
   try {
