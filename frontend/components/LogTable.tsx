@@ -1,7 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import { useDashboardPreferences } from "@/hooks/use-dashboard-preferences";
 
@@ -16,9 +16,10 @@ export function LogTable({ rows }: { rows: LogRow[] }) {
   const [query, setQuery] = useState("");
   const [sortDescending, setSortDescending] = useState(true);
   const { density } = useDashboardPreferences();
+  const deferredQuery = useDeferredValue(query);
 
   const filtered = useMemo(() => {
-    const normalized = query.toLowerCase().trim();
+    const normalized = deferredQuery.toLowerCase().trim();
     const matchingRows = !normalized
       ? rows
       : rows.filter((row) => `${row.category} ${row.label}`.toLowerCase().includes(normalized));
@@ -27,7 +28,7 @@ export function LogTable({ rows }: { rows: LogRow[] }) {
       const delta = left.value - right.value;
       return sortDescending ? -delta : delta;
     });
-  }, [rows, query, sortDescending]);
+  }, [rows, deferredQuery, sortDescending]);
 
   const rowPadding = density === "compact" ? "py-1.5" : "py-2.5";
 
