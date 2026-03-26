@@ -3,17 +3,27 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import datetime
 from functools import reduce
 from math import isclose
 
 from backend.pipeline.filters import has_level
 
 LogRecord = dict[str, str]
+HealthStatus = str
 
 
 def _increment_counter(counter: dict[str, int], key: str) -> dict[str, int]:
     """Return a new counter dictionary with an incremented key."""
     return {**counter, key: counter.get(key, 0) + 1}
+
+
+def _sorted_counter_items(counter: dict[str, int], *, limit: int | None = None) -> list[tuple[str, int]]:
+    """Return counter items sorted by value descending, then label ascending."""
+    ranked = sorted(counter.items(), key=lambda pair: (-pair[1], pair[0]))
+    if limit is None:
+        return ranked
+    return ranked[:limit]
 
 
 def count_errors_per_ip(records: Iterable[LogRecord]) -> dict[str, int]:
@@ -64,7 +74,7 @@ def top_failing_services(records: Iterable[LogRecord], top_n: int = 5) -> list[t
         filter(has_level("ERROR"), records),
         {},
     )
-    return sorted(error_counts.items(), key=lambda pair: pair[1], reverse=True)[:top_n]
+    return _sorted_counter_items(error_counts, limit=top_n)
 
 
 def top_error_messages(records: Iterable[LogRecord], top_n: int = 5) -> list[tuple[str, int]]:
@@ -74,7 +84,7 @@ def top_error_messages(records: Iterable[LogRecord], top_n: int = 5) -> list[tup
         filter(has_level("ERROR"), records),
         {},
     )
-    return sorted(error_counts.items(), key=lambda pair: (pair[1], pair[0]), reverse=True)[:top_n]
+    return _sorted_counter_items(error_counts, limit=top_n)
 
 
 def error_timeline_by_hour(records: Iterable[LogRecord]) -> dict[str, int]:
@@ -91,6 +101,15 @@ def error_timeline_by_hour(records: Iterable[LogRecord]) -> dict[str, int]:
         errors,
         {},
     )
+
+
+def record_timeline_by_hour(records: Iterable[LogRecord]) -> dict[str, int]:
+    """Build an hourly timeline across all observed records."""
+    def reducer(acc: dict[str, int], record: LogRecord) -> dict[str, int]:
+        timestamp = record.get("timestamp", "unknown")
+        return _increment_counter(acc, f"{timestamp[:13]}:00")
+
+    return reduce(reducer, records, {})
 
 
 def recursive_total(counts: list[int]) -> int:
@@ -142,6 +161,51 @@ def classify_health_status(total_errors: int, total_records: int) -> str:
     if error_rate < 0.4:
         return "degraded"
     return "critical"
+
+
+def busiest_service(records: Iterable[LogRecord]) -> str | None:
+    """Return the service with the highest observed record count."""
+    volumes = service_volume(records)
+    if not volumes:
+        return None
+    return _sorted_counter_items(volumes, limit=1)[0][0]
+
+
+def timestamp_bounds(records: Iterable[LogRecord]) -> tuple[str | None, str | None]:
+    """Return the earliest and latest timestamps observed in the dataset."""
+    timestamps = sorted(record.get("timestamp", "") for record in records if record.get("timestamp"))
+    if not timestamps:
+        return (None, None)
+    return (timestamps[0], timestamps[-1])
+
+
+def observation_window_hours(records: Iterable[LogRecord]) -> float:
+    """Return the observed time span between the first and last log entry."""
+    first_seen, last_seen = timestamp_bounds(records)
+    if not first_seen or not last_seen:
+        return 0.0
+
+    start = datetime.fromisoformat(first_seen.replace("Z", "+00:00"))
+    end = datetime.fromisoformat(last_seen.replace("Z", "+00:00"))
+    return round((end - start).total_seconds() / 3600, 2)
+
+
+def service_health_breakdown(records: Iterable[LogRecord]) -> dict[str, HealthStatus]:
+    """Classify each service by its local error rate."""
+    service_totals = service_volume(records)
+    service_errors = dict(top_failing_services(records, top_n=len(service_totals) or 1))
+
+    return {
+        service: classify_health_status(service_errors.get(service, 0), total)
+        for service, total in sorted(service_totals.items())
+    }
+
+
+def error_free_service_count(records: Iterable[LogRecord]) -> int:
+    """Count services that have traffic but no observed errors."""
+    service_totals = service_volume(records)
+    failing_services = {service for service, _ in top_failing_services(records, top_n=len(service_totals) or 1)}
+    return sum(1 for service in service_totals if service not in failing_services)
 
 
 def clean_record_ratio(total_records: int, skipped_records: int) -> float:
